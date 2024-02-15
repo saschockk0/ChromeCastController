@@ -127,6 +127,15 @@ def kill_vlc():
         return  print("Successfully killed VLC process")
 
 
+def swap_video(copied_files: list[Path], deleted_files: list[Path], converted_videos_folder: Path, final_video: Path):
+    if len(copied_files) > 0 or len(deleted_files) > 0 or not final_video.exists():
+        kill_vlc()
+        concatenate(get_files(converted_videos_folder, pattern="*.mp4"), final_video)
+        start_vlc(final_video)
+    else:
+        if vlc_alive() is False:
+            start_vlc(final_video)
+
 @app.command()
 def main(source_dir: Path, dest_dir:  Path):
     # source_dir = Path("Z:/Магия/Покрутить видосики на экране")
@@ -145,13 +154,7 @@ def main(source_dir: Path, dest_dir:  Path):
 
     convert_rotate(copied_files, converted_videos_folder, suffix="mp4")
 
-    if len(copied_files) > 0 or len(deleted_files) > 0 or not final_video.exists():
-        kill_vlc()
-        concatenate(get_files(converted_videos_folder, pattern="*.mp4"), final_video)
-        start_vlc(final_video)
-    else:
-        if vlc_alive() is False:
-            start_vlc(final_video)
+    swap_video(copied_files, deleted_files, converted_videos_folder, final_video)
 
 
 if __name__ == "__main__":
