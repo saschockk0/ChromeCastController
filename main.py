@@ -7,7 +7,7 @@ import os
 import typer
 import psutil
 from pathlib import Path
-import sys
+import time
 
 
 app = typer.Typer()
@@ -46,8 +46,8 @@ def diff_files(source_folder: Path, dest_dir: Path, source_pattern: str = "*", d
 # Сравнение и удаление файлов в папках
 def diff_and_remove_files(source_folder: Path, dest_dir: Path, source_pattern: str = "*", dest_pattern: str = "*"):
     to_remove = diff_files(source_folder, dest_dir, source_pattern=source_pattern, dest_pattern=dest_pattern)
-    if len(to_remove) > 0:
-        kill_vlc()
+    # if len(to_remove) > 0:
+        # kill_vlc()
 
     for dest_dir_file in to_remove:
         print(f"Removing file {dest_dir_file}")
@@ -102,7 +102,6 @@ def vlc_alive() -> bool:
     return False
 
 
-
 def start_vlc(video: Path):
     print("Starting VLC")
     subprocess.Popen(
@@ -116,6 +115,7 @@ def start_vlc(video: Path):
         ]
     )
 
+
 @app.command()
 def kill_vlc():
     try:
@@ -124,37 +124,46 @@ def kill_vlc():
     except: #Код ошибки?
         return print("Error occurred during killing VLC process")
     else:
-        return  print("Successfully killed VLC process")
+        return print("Successfully killed VLC process")
 
 
-def swap_video(copied_files: list[Path], deleted_files: list[Path], converted_videos_folder: Path, final_video: Path):
+def swap_video(copied_files: list[Path], deleted_files: list[Path], converted_videos_folder: Path, final_video: Path,
+               temp_final_video: Path):
     if len(copied_files) > 0 or len(deleted_files) > 0 or not final_video.exists():
+        concatenate(get_files(converted_videos_folder, pattern="*.mp4"), temp_final_video)
         kill_vlc()
-        concatenate(get_files(converted_videos_folder, pattern="*.mp4"), final_video)
+        if final_video.exists():
+            time.sleep(5)
+            os.remove(final_video)
+        os.rename(temp_final_video, final_video)
         start_vlc(final_video)
     else:
         if vlc_alive() is False:
             start_vlc(final_video)
 
+
+
 @app.command()
 def main(source_dir: Path, dest_dir:  Path):
-    # source_dir = Path("Z:/Магия/Покрутить видосики на экране")
-    # dest_dir = Path("C:/Users/Shuri/Videotmep")
-
     converted_videos_folder = dest_dir / "Converted"
     final_folder = converted_videos_folder / "Final"
     final_video = final_folder / "Final.mp4"
+    temp_final_video = final_folder / "TempFinal.mp4"
 
     if not final_folder.exists():
         final_folder.mkdir(exist_ok=True, mode=777, parents=True)
 
     diff_and_remove_files(source_dir, dest_dir, source_pattern="*.mov", dest_pattern="*.mov")
-    deleted_files = diff_and_remove_files(source_dir, converted_videos_folder, source_pattern="*.mov", dest_pattern="*.mp4")
+    deleted_files = diff_and_remove_files(
+        source_dir,
+        converted_videos_folder,
+        source_pattern="*.mov",
+        dest_pattern="*.mp4"
+    )
     copied_files = copy_files(source_dir, dest_dir, "*.mov")
 
     convert_rotate(copied_files, converted_videos_folder, suffix="mp4")
-
-    swap_video(copied_files, deleted_files, converted_videos_folder, final_video)
+    swap_video(copied_files, deleted_files, converted_videos_folder, final_video, temp_final_video)
 
 
 if __name__ == "__main__":
