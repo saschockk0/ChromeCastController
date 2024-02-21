@@ -10,7 +10,7 @@ from pathlib import Path
 
 app = typer.Typer()
 EXCEPTIONS = [".DS_STORE", "Инструкция", "Converted", "Final"]
-logging.basicConfig(level=logging.ERROR, filename="tv_log.log", format="%(asctime)s %(levelname)s %(message)s")
+logging.basicConfig(level=logging.INFO, filename="tv_log.log", format="%(asctime)s %(levelname)s %(message)s")
 os.chmod("./tv_log.log", 0o777)
 logger = logging.getLogger(__name__)
 
