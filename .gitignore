@@ -4,4 +4,5 @@ dist
 main.spec
 build
 log.txt
+refactored.py
 
