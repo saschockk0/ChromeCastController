@@ -160,7 +160,7 @@ def main(source_dir: Path, dest_dir: Path):
 
     if not final_folder.exists():
         logger.info("Creating final folder")
-        final_folder.mkdir(exist_ok=True, mode=777, parents=True)
+        final_folder.mkdir(exist_ok=True, parents=True)
 
     diff_and_remove_files(source_dir, dest_dir, source_pattern="*.mov", dest_pattern="*.mov")
     deleted_files = diff_and_remove_files(
