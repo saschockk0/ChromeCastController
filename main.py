@@ -2,6 +2,7 @@ import shutil
 import subprocess
 import ffmpeg
 import os
+import signal
 import typer
 import psutil
 import time
@@ -85,18 +86,41 @@ def get_files(path: Path, pattern: str) -> list[Path]:
 
 def vlc_alive() -> bool:
     logger.info("Checking VLC process")
-    return any(process.name() == "vlc.exe" for process in psutil.process_iter())
+    name = "vlc"
+    try:
+        for line in os.popen("ps ax | grep " + name + " | grep -v grep"):
+            fields = line.split()
+            pid = fields[0]
+            os.kill(int(pid), signal.SIGKILL)
+        print("Process is alive with PID" + pid)
+        return True
+    except:
+        print("Error Encountered while checking VLC")
+        return False
+
+
+def kill_vlc_linux():
+    name = "vlc"
+    try:
+        for line in os.popen("ps ax | grep " + name + " | grep -v grep"):
+            fields = line.split()
+            pid = fields[0]
+            os.kill(int(pid), signal.SIGKILL)
+        print("Process Successfully terminated")
+    except:
+        print("Error Encountered while running script")
 
 
 def start_vlc(video: Path):
     logging.info("Starting VLC")
     subprocess.Popen([
-        "C:/Program Files/VideoLAN/VLC/vlc.exe",
+        "vlc",
         video,
-        "--sout=#chromecast",
-        "--sout-chromecast-ip=10.2.0.25",
-        "--demux-filter=demux_chromecast",
-        "-R"
+        "--fullscreen",
+        "--no-video-title-show",
+        "--qt-start-minimized",
+        "--video-wallpaper",
+        "--repeat"
     ])
 
 
@@ -105,6 +129,7 @@ def kill_vlc():
     try:
         logger.info("Killing VLC process")
         os.system("taskkill /f /im vlc.exe")
+
     except Exception as e:
         logger.info(f"Error occurred during killing VLC process: {e}")
     else:
@@ -115,7 +140,7 @@ def swap_video(copied_files: list[Path], deleted_files: list[Path], converted_vi
                temp_final_video: Path):
     if copied_files or deleted_files or not final_video.exists():
         concatenate(get_files(converted_videos_folder, pattern="*.mp4"), temp_final_video)
-        kill_vlc()
+        kill_vlc_linux()
 
         if final_video.exists():
             time.sleep(5)
@@ -152,3 +177,9 @@ def main(source_dir: Path, dest_dir: Path):
 
 if __name__ == "__main__":
     typer.run(main)
+    # start_vlc(Path("/home/saschockk/Рабочий стол/test.MOV"))
+    # # print(vlc_alive())
+    # # time.sleep(10)
+    # # kill_vlc_linux()
+    # # time.sleep(5)
+    # # print(vlc_alive())
